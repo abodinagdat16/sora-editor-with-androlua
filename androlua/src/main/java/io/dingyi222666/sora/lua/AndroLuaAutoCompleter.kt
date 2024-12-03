@@ -5,6 +5,7 @@ import android.util.Log
 import com.androlua.source.LuaLexer
 import com.androlua.source.LuaTokenTypes
 import com.androlua.source.LuaParser
+import com.androlua.source.PackageUtil
 import io.github.rosemoe.sora.lang.completion.CompletionItemKind
 import io.github.rosemoe.sora.lang.completion.CompletionPublisher
 import io.github.rosemoe.sora.lang.completion.SimpleCompletionItem
@@ -22,14 +23,14 @@ class AndroLuaAutoCompleter(
         extraArguments: Bundle
     ) {
         val keyword = computePrefix(content, position)
-        val prefixLength: Int
+
         val items = tokenize(content, publisher)
 
         val keywords = keyword.split('.')
 
         val currentKeyWord = keywords.last()
 
-        prefixLength = currentKeyWord.length
+        val prefixLength = currentKeyWord.length
 
         filterItems(items, keyword, keywords, currentKeyWord, position)
 
@@ -65,11 +66,15 @@ class AndroLuaAutoCompleter(
         } else {
             LuaParser.filterJava(packageName, currentKeyWord, position.index)
                 .map {
-                    CompletionName(it, CompletionItemKind.Function, " :java")
+                    CompletionName(it, CompletionItemKind.Method, " :java")
                 }.let {
                     items.addAll(it)
                 }
 
+            PackageUtil.filterPackage(packageName, currentKeyWord)
+                .let {
+                    items.addAll(it)
+                }
         }
     }
 
@@ -81,10 +86,12 @@ class AndroLuaAutoCompleter(
         position: CharPosition
     ) {
         Log.d("AndroLuaAutoCompleter", "filterItems: $keyword, $keywords, $currentKeyWord")
+
+        val last = if (keyword.isNotEmpty()) keyword.last() else keyword
         if (keywords.size == 2) {
             filterPackages(currentKeyWord, items, keywords, position)
         } else if (keywords.size == 1) {
-            val last = if (keyword.isNotEmpty()) keyword.last() else keyword
+
             if (last == '.') {
                 filterPackages(currentKeyWord, items, keywords, position)
             } else {
@@ -111,7 +118,15 @@ class AndroLuaAutoCompleter(
                         items.add(CompletionName(it, CompletionItemKind.Module, " :package"))
                     }
             }
+
         }
+
+
+        PackageUtil.filter(keyword)
+            .let {
+                items.addAll(it)
+            }
+
     }
 
 
@@ -132,9 +147,9 @@ class AndroLuaAutoCompleter(
         }
 
         return if (firstInvisible == -1) {
-            lineContent.substring(0, position.column)
+            lineContent.substring(0, position.column).lowercase()
         } else {
-            lineContent.substring(firstInvisible + 1, position.column)
+            lineContent.substring(firstInvisible + 1, position.column).lowercase()
         }
     }
 

@@ -3,6 +3,7 @@ package com.androlua.source;
 import android.text.SpannableString;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 
 import org.luaj.vm.LocVars;
 import org.luaj.vm.LuaString;
@@ -179,7 +180,7 @@ public class LuaParser {
     }
 
     public static boolean lexer(CharSequence src, CompletionPublisher publisher) {
-        //Log.i("luaj", "lexer: start");
+        Log.d("luaj", "lexer: start");
         try {
             //Prototype lex = LuaC.lexer(new CharInputSteam(src), "luaj");
             Prototype lex = LuaC.lexer(src, "luaj", publisher);
@@ -204,9 +205,10 @@ public class LuaParser {
 
     public static String typename(String n, LocVars l) {
         VarType type = l.type;
+       // Log.d("luaj", "typename: " + n + ';' + l + l.type);
         if (type == null)
             return "";
-        //Log.i("luaj", "typename: " + n + ';' + type.typename);
+       // Log.d("luaj", "typename: " + n + ';' + type.typename);
         int idx = type.typename.lastIndexOf(".");
         if (idx < 1)
             return type.typename;
@@ -243,6 +245,8 @@ public class LuaParser {
         ArrayList<String> ms = javaMethodMap.get(typename);
         if (ms != null)
             return;
+
+        Log.d("luaj", "getJavaMethods: " + typename);
         ms = new ArrayList<>();
         try {
             Class<?> clazz = Class.forName(typename);
@@ -336,12 +340,12 @@ public class LuaParser {
                     continue;
                 ca.add(n);
                 if (n.toLowerCase().startsWith(name))
-                    ret.add(new CompletionName(n, CompletionItemKind.Variable, var.type));
+                    ret.add(new CompletionName(n, var.type.equals(" :arg") ? CompletionItemKind.TypeParameter : CompletionItemKind.Variable, var.type));
                 String p = getSpells(n);
                 if (TextUtils.isEmpty(p))
                     continue;
                 if (p.startsWith(name))
-                    ret.add(new CompletionName(n, CompletionItemKind.Variable, var.type));
+                    ret.add(new CompletionName(n, var.type.equals(" :arg") ? CompletionItemKind.TypeParameter : CompletionItemKind.Variable, var.type));
             }
         }
         ArrayList<LuaString> ks = globalist;

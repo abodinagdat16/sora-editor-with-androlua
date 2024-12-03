@@ -41,6 +41,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts.GetContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.androlua.source.PackageUtil
 import io.dingyi222666.sora.demo.databinding.ActivityMainBinding
 import io.dingyi222666.sora.demo.utils.CrashHandler
 import io.dingyi222666.sora.demo.R
@@ -237,7 +238,14 @@ class MainActivity : AppCompatActivity() {
         val language = TextMateLanguage.create(
             "source.lua", true
         )
-        editor.setEditorLanguage(WrapperLanguage(language, AndroLuaLanguage()))
+
+        // load java packages
+        PackageUtil.load(this)
+
+        val androLuaLanguage = AndroLuaLanguage()
+
+        androLuaLanguage.addBasePackage("activity", listOf("activity", "activity", "activity", "activity"))
+        editor.setEditorLanguage(WrapperLanguage(language, androLuaLanguage))
 
         // Open assets file
         openAssetsFile("testProject/sample.lua")

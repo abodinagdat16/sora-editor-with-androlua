@@ -53,9 +53,23 @@ class AndroLuaLanguage(
     fun addBasePackage(name: String, words: List<String>) {
         privatePackages[name] = mutableListOf()
         for (word in words) {
-            privatePackages[name]?.add(CompletionName(word, CompletionItemKind.Function," :function"))
+            privatePackages[name]?.add(
+                CompletionName(
+                    word,
+                    CompletionItemKind.Function,
+                    " :function"
+                )
+            )
         }
     }
+
+    fun addBasePackageByKind(name: String, words: List<CompletionName>) {
+        privatePackages[name] = mutableListOf()
+        for (word in words) {
+            privatePackages[name]?.addAll(words)
+        }
+    }
+
     fun isBasePackage(name: String): Boolean {
         return privatePackages.containsKey(name)
     }
@@ -79,12 +93,12 @@ class AndroLuaLanguage(
         publisher: CompletionPublisher,
         extraArguments: Bundle
     ) {
-       autoCompleter.requireAutoComplete(
-           reference,
-           position,
-           publisher,
-           extraArguments
-       )
+        autoCompleter.requireAutoComplete(
+            reference,
+            position,
+            publisher,
+            extraArguments
+        )
     }
 
     companion object {
