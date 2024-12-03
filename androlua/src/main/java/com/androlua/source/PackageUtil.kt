@@ -174,7 +174,8 @@ object PackageUtil {
             names.add(CompletionName(method.name, CompletionItemKind.Method, " :method"))
 
             if (method.parameters.isEmpty() && method.name.startsWith("get")) {
-                names.add(CompletionName(method.name, CompletionItemKind.Property, " :property"))
+                val name = method.name.substring(3)
+                names.add(CompletionName(name.substring(0, 1).lowercase() + name.substring(1), CompletionItemKind.Property, " :property"))
             }
 
             if (method.parameters.size == 1 && method.name.startsWith(
