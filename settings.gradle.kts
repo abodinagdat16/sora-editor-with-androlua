@@ -21,5 +21,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "sora-editor-with-androlua"
-include(":app")
- 
+include(":app", ":androlua")

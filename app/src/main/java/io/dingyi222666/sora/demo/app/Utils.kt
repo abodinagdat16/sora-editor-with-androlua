@@ -22,7 +22,7 @@
  *     additional information or have any questions
  ******************************************************************************/
 
-package io.github.rosemoe.sora.app
+package io.dingyi222666.sora.demo.app
 
 import android.app.Activity
 import android.content.Context

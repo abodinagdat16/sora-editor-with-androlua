@@ -28,7 +28,6 @@ import android.content.DialogInterface
 import android.content.res.Configuration
 import android.graphics.Typeface
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -52,7 +51,6 @@ import io.github.rosemoe.sora.event.PublishSearchResultEvent
 import io.github.rosemoe.sora.event.SelectionChangeEvent
 import io.github.rosemoe.sora.event.SideIconClickEvent
 import io.github.rosemoe.sora.event.TextSizeChangeEvent
-import io.github.rosemoe.sora.lang.EmptyLanguage
 import io.github.rosemoe.sora.lang.diagnostic.DiagnosticRegion
 import io.github.rosemoe.sora.lang.diagnostic.DiagnosticsContainer
 import io.github.rosemoe.sora.langs.textmate.TextMateColorScheme
@@ -69,8 +67,8 @@ import io.github.rosemoe.sora.text.LineSeparator
 import io.dingyi222666.sora.demo.utils.codePointStringAt
 import io.dingyi222666.sora.demo.utils.escapeCodePointIfNecessary
 import io.dingyi222666.sora.demo.utils.toast
-import io.github.rosemoe.sora.app.startActivity
-import io.github.rosemoe.sora.app.switchThemeIfRequired
+import io.dingyi222666.sora.lua.AndroLuaLanguage
+import io.dingyi222666.sora.lua.WrapperLanguage
 import io.github.rosemoe.sora.widget.CodeEditor
 import io.github.rosemoe.sora.widget.EditorSearcher.SearchOptions
 import io.github.rosemoe.sora.widget.SelectionMovement
@@ -239,7 +237,7 @@ class MainActivity : AppCompatActivity() {
         val language = TextMateLanguage.create(
             "source.lua", true
         )
-        editor.setEditorLanguage(language)
+        editor.setEditorLanguage(WrapperLanguage(language, AndroLuaLanguage()))
 
         // Open assets file
         openAssetsFile("testProject/sample.lua")
@@ -686,7 +684,6 @@ class MainActivity : AppCompatActivity() {
             toast(R.string.deleting_log_success)
         }
     }
-
 
 
     private fun chooseTheme() {

@@ -1,20 +1,17 @@
 plugins {
-    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
 }
 
 android {
-    namespace = "io.dingyi222666.sora.demo"
+    namespace = "io.dingyi222666.sora.lua"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "io.dingyi222666.sora.demo"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
@@ -26,11 +23,6 @@ android {
             )
         }
     }
-
-    compileOptions {
-        isCoreLibraryDesugaringEnabled = true
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -38,26 +30,17 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
-
-    buildFeatures {
-        viewBinding = true
-    }
 }
 
 dependencies {
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation(libs.kotlinx.coroutines)
 
-    // Desugar
-    coreLibraryDesugaring(libs.desugar)
-
-
-    implementation(platform(libs.sora.editor.bom))
-    implementation(libs.sora.editor)
-    implementation(libs.sora.editor.language.textmate)
-    implementation(project(":androlua"))
+    api(platform(libs.sora.editor.bom))
+    api(libs.sora.editor)
+    api(libs.sora.editor.language.textmate)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
