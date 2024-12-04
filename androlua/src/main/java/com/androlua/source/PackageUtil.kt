@@ -13,6 +13,8 @@ object PackageUtil {
     private var packages: JSONObject? = null
     private val classMap = mutableMapOf<String, MutableList<String>>()
 
+    private val classNames = mutableListOf<String>()
+
     private val cacheClassed = mutableMapOf<String, List<CompletionName>>()
 
     @JvmStatic
@@ -93,7 +95,11 @@ object PackageUtil {
                 if (key[0].isUpperCase()) {
                     classMap.getOrPut(key) { mutableListOf() }.add(pkg + key)
                 }
-                buildImports(subJson, "$pkg$key.")
+                if (subJson.length() == 0) {
+                    classNames.add(key)
+                } else {
+                    buildImports(subJson, "$pkg$key.")
+                }
             } catch (e: Exception) {
                 // 忽略解析错误
             }
@@ -124,9 +130,14 @@ object PackageUtil {
             }
         }
 
-        return currentJson?.keys()?.asSequence()?.filter { it.lowercase().startsWith(searchTerm) }
+        val packages = currentJson?.keys()?.asSequence()?.filter { it.lowercase().startsWith(searchTerm) }
             ?.map { CompletionName(it, CompletionItemKind.Module, " :package | :class") }?.toList()
             ?: emptyList()
+
+        val classes = classNames.filter { it.lowercase().startsWith(searchTerm) }
+            .map { CompletionName(it, CompletionItemKind.Class, " :class") }.toList()
+
+        return packages + classes
     }
 
     @JvmStatic
@@ -144,19 +155,19 @@ object PackageUtil {
         }.flatMap {
             runCatching {
                 cacheClassed.getOrPut(it.name) {
-                   /* val base = (getJavaMethods(it) + getJavaFields(it)).toMutableList()
+                    /* val base = (getJavaMethods(it) + getJavaFields(it)).toMutableList()
 
-                    // 添加父类方法，直到 Object
+                     // 添加父类方法，直到 Object
 
-                    var clazz = it
+                     var clazz = it
 
-                    while (clazz.name != "java.lang.Object") {
-                        clazz = clazz.superclass
+                     while (clazz.name != "java.lang.Object") {
+                         clazz = clazz.superclass
 
-                        base.addAll(getJavaMethods(clazz))
-                        base.addAll(getJavaFields(clazz))
-                    }
-                    base*/
+                         base.addAll(getJavaMethods(clazz))
+                         base.addAll(getJavaFields(clazz))
+                     }
+                     base*/
 
                     getJavaMethods(it) + getJavaFields(it)
                 }
@@ -175,7 +186,13 @@ object PackageUtil {
 
             if (method.parameters.isEmpty() && method.name.startsWith("get")) {
                 val name = method.name.substring(3)
-                names.add(CompletionName(name.substring(0, 1).lowercase() + name.substring(1), CompletionItemKind.Property, " :property"))
+                names.add(
+                    CompletionName(
+                        name.substring(0, 1).lowercase() + name.substring(1),
+                        CompletionItemKind.Property,
+                        " :property"
+                    )
+                )
             }
 
             if (method.parameters.size == 1 && method.name.startsWith(

@@ -83,7 +83,6 @@ class AndroLuaAutoCompleter(
         currentKeyWord: String,
         position: CharPosition
     ) {
-        Log.d("AndroLuaAutoCompleter", "filterItems: $keyword, $keywords, $currentKeyWord")
 
         val last = if (keyword.isNotEmpty()) keyword.last() else keyword
         if (keywords.size == 2) {
