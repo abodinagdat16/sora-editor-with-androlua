@@ -1,6 +1,8 @@
 package io.dingyi222666.sora.lua
 
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import io.github.rosemoe.sora.lang.completion.CompletionItemKind
 import io.github.rosemoe.sora.lang.completion.CompletionPublisher
 import io.github.rosemoe.sora.text.CharPosition
@@ -28,6 +30,7 @@ class AndroLuaLanguage(
 
     var showDiagnostic = true
 
+    private val uiHandler = Handler(Looper.getMainLooper())
     private var onDiagnosticListener: LuaLanguage.OnDiagnosticListener? = null
 
     override fun setOnDiagnosticListener(listener: LuaLanguage.OnDiagnosticListener?) {
@@ -102,7 +105,9 @@ class AndroLuaLanguage(
         )
 
         if (result != null && showDiagnostic) {
-            onDiagnosticListener?.onDiagnosticsChanged(result)
+           uiHandler.post {
+               onDiagnosticListener?.onDiagnosticsChanged(result)
+           }
         }
     }
 

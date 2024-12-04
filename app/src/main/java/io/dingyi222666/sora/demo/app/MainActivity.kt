@@ -249,9 +249,7 @@ class MainActivity : AppCompatActivity() {
         androLuaLanguage.setOnDiagnosticListener {
             diagnosticsContainer.reset()
             diagnosticsContainer.addDiagnostics(it)
-            runOnUiThread {
-                editor.diagnostics = diagnosticsContainer
-            }
+            editor.diagnostics = diagnosticsContainer
         }
 
         editor.setEditorLanguage(WrapperLanguage(language, androLuaLanguage))
