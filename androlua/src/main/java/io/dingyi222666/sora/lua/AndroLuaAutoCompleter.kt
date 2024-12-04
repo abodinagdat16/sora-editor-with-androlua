@@ -65,9 +65,7 @@ class AndroLuaAutoCompleter(
             }
         } else {
             LuaParser.filterJava(packageName, currentKeyWord, position.index)
-                .map {
-                    CompletionName(it, CompletionItemKind.Method, " :java")
-                }.let {
+                .let {
                     items.addAll(it)
                 }
 

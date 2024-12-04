@@ -191,8 +191,6 @@ object PackageUtil {
                 // sort the first char
                 name = name.substring(0, 1).lowercase() + name.substring(1)
 
-                println(name)
-
                 names.add(CompletionName(name, CompletionItemKind.Field, " :field"))
             }
         }

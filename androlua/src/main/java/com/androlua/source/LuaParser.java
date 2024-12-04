@@ -51,9 +51,9 @@ public class LuaParser {
     public final static int STRING = 8;
     public final static int COMMENT = 9;
 
-    public static ArrayList<String> filterJava(String pkg, String keyword, int i) {
+    public static ArrayList<CompletionName> filterJava(String pkg, String keyword, int i) {
         //Log.i("luaj", "filterJava: " + pkg + ";" + keyword + ";" + i);
-        ArrayList<String> ms = new ArrayList<>();
+        ArrayList<CompletionName> ms = new ArrayList<>();
         ArrayList<JavaVar> js = javaVar.get(pkg);
         if (js == null)
             return ms;
@@ -66,7 +66,7 @@ public class LuaParser {
                     if (mm != null) {
                         for (String s : mm) {
                             if (s.toLowerCase().startsWith(keyword))
-                                ms.add(s);
+                                ms.add(new CompletionName(s, CompletionItemKind.Property, " :property"));
                         }
                     }
                 }
@@ -75,34 +75,8 @@ public class LuaParser {
                     continue;
                 for (String s : mm) {
                     if (s.toLowerCase().startsWith(keyword))
-                        ms.add(s);
+                        ms.add(new CompletionName(s, CompletionItemKind.Method, " :method"));
                 }
-                break;
-            }
-        }
-        return ms;
-    }
-
-    public static ArrayList<String> filterJava(String pkg, int i) {
-        i = i - pkg.length();
-        //Log.i("luaj", "filterJava: " + pkg + ";" + javaVar);
-        ArrayList<String> ms = new ArrayList<>();
-        ArrayList<JavaVar> js = javaVar.get(pkg);
-        //Log.i("luaj", "filterJava: " + pkg + ";" + js);
-        if (js == null)
-            return ms;
-        for (int i1 = js.size() - 1; i1 >= 0; i1--) {
-            JavaVar j = js.get(i1);
-            //Log.i("luaj", "filterJava: " + pkg + ";" + j.name);
-            if (j.startidx <= i && j.endidx >= i) {
-                if (j.name.toLowerCase().endsWith("." + pkg)) {
-                    ArrayList<String> mm = javaFieldMap.get(j.name);
-                    if (mm != null)
-                        ms.addAll(mm);
-                }
-                ArrayList<String> mm = javaMethodMap.get(j.name);
-                if (mm != null)
-                    ms.addAll(mm);
                 break;
             }
         }
@@ -246,7 +220,6 @@ public class LuaParser {
         if (ms != null)
             return;
 
-        Log.d("luaj", "getJavaMethods: " + typename);
         ms = new ArrayList<>();
         try {
             Class<?> clazz = Class.forName(typename);
@@ -289,10 +262,8 @@ public class LuaParser {
         LocVars[] ls = p.locvars;
         int np = p.numparams;
         Upvaldesc[] us = p.upvalues;
-        for (int i = 0; i < us.length; i++) {
-            Upvaldesc l = us[i];
+        for (Upvaldesc l : us) {
             String n = l.name.tojstring();
-            typename(n, l);
             varList.add(new Var(n, " :upval", p.startidx, p.endidx));
         }
         for (int i = 0; i < ls.length; i++) {
