@@ -153,7 +153,7 @@ public class LuaParser {
         }
     }
 
-    public static boolean lexer(CharSequence src, CompletionPublisher publisher) {
+    public static boolean lexer(CharSequence src, CompletionPublisher publisher) throws IOException {
         Log.d("luaj", "lexer: start");
         try {
             //Prototype lex = LuaC.lexer(new CharInputSteam(src), "luaj");
@@ -168,9 +168,8 @@ public class LuaParser {
             //Log.i("luaj", "lexer: "+valueMap);
             return true;
         } catch (Exception e) {
-            //e.printStackTrace();
+            throw e;
         }
-        return false;
     }
 
     public static HashMap<String, ArrayList<Pair>> getLocalMap() {

@@ -9,8 +9,11 @@ import io.github.rosemoe.sora.lang.completion.CompletionItemKind
 import io.github.rosemoe.sora.lang.completion.CompletionPublisher
 import io.github.rosemoe.sora.lang.completion.SimpleCompletionItem
 import io.github.rosemoe.sora.lang.completion.getCompletionItemComparator
+import io.github.rosemoe.sora.lang.diagnostic.DiagnosticDetail
+import io.github.rosemoe.sora.lang.diagnostic.DiagnosticRegion
 import io.github.rosemoe.sora.text.CharPosition
 import io.github.rosemoe.sora.text.ContentReference
+import org.luaj.vm.LuaError
 
 class AndroLuaAutoCompleter(
     private val language: AndroLuaLanguage
@@ -20,10 +23,10 @@ class AndroLuaAutoCompleter(
         position: CharPosition,
         publisher: CompletionPublisher,
         extraArguments: Bundle
-    ) {
+    ): List<DiagnosticRegion>? {
         val keyword = computePrefix(content, position)
 
-        val items = tokenize(content, publisher)
+        val (items, diagnosticRegions) = tokenize(content, publisher)
 
         val keywords = keyword.split('.')
 
@@ -43,6 +46,8 @@ class AndroLuaAutoCompleter(
         publisher.addItems(completionList)
 
         publisher.updateList()
+
+        return diagnosticRegions
     }
 
 
@@ -157,19 +162,35 @@ class AndroLuaAutoCompleter(
     private fun tokenize(
         content: ContentReference,
         publisher: CompletionPublisher
-    ): MutableList<CompletionName> {
-        val maxRow = 9999
+    ): Pair<MutableList<CompletionName>, List<DiagnosticRegion>> {
         val items = mutableSetOf<CompletionName>()
 
         val contentString = content.toString()
 
-
-        if (!LuaParser.lexer(
+        runCatching {
+            LuaParser.lexer(
                 contentString,
                 publisher
             )
-        ) {
-            return mutableListOf()
+        }.onFailure {
+            println(it)
+            if (it is LuaError) {
+                val line = 1.coerceAtLeast(it.line - 1)
+                val lastLine = 1.coerceAtLeast(it.lastLine - 1)
+                val col = 0.coerceAtLeast(content.getColumnCount(line) - 1)
+                val diagnostics = listOf(
+                    DiagnosticRegion(
+                        content.getCharIndex(lastLine, 0),
+                        content.getCharIndex(line, col),
+                        DiagnosticRegion.SEVERITY_ERROR,
+                        0x00,
+                        DiagnosticDetail("Error", it.message)
+                    )
+                )
+                return Pair(mutableListOf(), diagnostics)
+            }
+
+            return Pair(mutableListOf(), emptyList())
         }
 
 
@@ -294,6 +315,6 @@ class AndroLuaAutoCompleter(
 
         }
 
-        return items.toMutableList()
+        return items.toMutableList() to emptyList()
     }
 }

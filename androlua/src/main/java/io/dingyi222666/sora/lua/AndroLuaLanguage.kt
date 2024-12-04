@@ -7,7 +7,6 @@ import io.github.rosemoe.sora.text.CharPosition
 import io.github.rosemoe.sora.text.ContentReference
 
 class AndroLuaLanguage(
-
 ) : LuaLanguage {
 
     private val privateKeywords = mutableListOf<String>()
@@ -27,11 +26,13 @@ class AndroLuaLanguage(
     val packages: Map<String, List<CompletionName>>
         get() = privatePackages
 
-    val delimiters = listOf(
-        '(', ')', '{', '}', '.', ',', ';', '=', '+', '-',
-        '/', '*', '&', '!', '|', ':', '[', ']', '<', '>',
-        '?', '~', '%', '^'
-    )
+    var showDiagnostic = true
+
+    private var onDiagnosticListener: LuaLanguage.OnDiagnosticListener? = null
+
+    override fun setOnDiagnosticListener(listener: LuaLanguage.OnDiagnosticListener?) {
+        onDiagnosticListener = listener
+    }
 
     init {
         privateKeywords.addAll(AndroLuaLanguage.keywords)
@@ -93,12 +94,16 @@ class AndroLuaLanguage(
         publisher: CompletionPublisher,
         extraArguments: Bundle
     ) {
-        autoCompleter.requireAutoComplete(
+        val result = autoCompleter.requireAutoComplete(
             reference,
             position,
             publisher,
             extraArguments
         )
+
+        if (result != null && showDiagnostic) {
+            onDiagnosticListener?.onDiagnosticsChanged(result)
+        }
     }
 
     companion object {

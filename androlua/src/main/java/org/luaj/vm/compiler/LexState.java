@@ -429,7 +429,7 @@ public class LexState extends Constants {
         else
             msg = L.pushfstring(cid + ":" + linenumber + ": " + msg);
 
-        throw new LuaError(msg);
+        throw new LuaError(msg,lastline,linenumber);
     }
 
     void syntaxerror(String msg) {

@@ -243,8 +243,17 @@ class MainActivity : AppCompatActivity() {
         PackageUtil.load(this)
 
         val androLuaLanguage = AndroLuaLanguage()
+        val diagnosticsContainer = DiagnosticsContainer()
 
-        androLuaLanguage.addBasePackage("activity", listOf("activity", "activity", "activity", "activity"))
+
+        androLuaLanguage.setOnDiagnosticListener {
+            diagnosticsContainer.reset()
+            diagnosticsContainer.addDiagnostics(it)
+            runOnUiThread {
+                editor.diagnostics = diagnosticsContainer
+            }
+        }
+
         editor.setEditorLanguage(WrapperLanguage(language, androLuaLanguage))
 
         // Open assets file
