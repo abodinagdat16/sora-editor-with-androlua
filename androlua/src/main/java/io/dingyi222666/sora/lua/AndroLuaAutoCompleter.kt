@@ -1,11 +1,10 @@
 package io.dingyi222666.sora.lua
 
 import android.os.Bundle
-import android.util.Log
-import com.androlua.source.LuaLexer
-import com.androlua.source.LuaTokenTypes
-import com.androlua.source.LuaParser
-import com.androlua.source.PackageUtil
+import io.dingyi222666.sora.lua.source.LuaLexer
+import io.dingyi222666.sora.lua.source.LuaTokenTypes
+import io.dingyi222666.sora.lua.source.LuaParser
+import io.dingyi222666.sora.lua.source.PackageUtil
 import io.github.rosemoe.sora.lang.completion.CompletionItemKind
 import io.github.rosemoe.sora.lang.completion.CompletionPublisher
 import io.github.rosemoe.sora.lang.completion.SimpleCompletionItem

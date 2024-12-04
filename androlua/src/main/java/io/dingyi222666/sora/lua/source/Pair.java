@@ -6,7 +6,7 @@
  *
  * This software is provided "as is". Use at your own risk.
  */
-package com.androlua.source;
+package io.dingyi222666.sora.lua.source;
 
 public final class Pair {
 	private int _first;

@@ -24,7 +24,7 @@ package org.luaj.vm.compiler;
 import android.annotation.SuppressLint;
 import android.graphics.Rect;
 
-import com.androlua.source.Pair;
+import io.dingyi222666.sora.lua.source.Pair;
 
 import org.luaj.vm.LocVars;
 import org.luaj.vm.Lua;

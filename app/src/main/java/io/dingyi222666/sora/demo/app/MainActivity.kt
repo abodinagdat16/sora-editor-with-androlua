@@ -41,7 +41,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts.GetContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import com.androlua.source.PackageUtil
+import io.dingyi222666.sora.lua.source.PackageUtil
 import io.dingyi222666.sora.demo.databinding.ActivityMainBinding
 import io.dingyi222666.sora.demo.utils.CrashHandler
 import io.dingyi222666.sora.demo.R
