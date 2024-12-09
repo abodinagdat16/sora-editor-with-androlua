@@ -879,61 +879,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupCompletionList() {
         completionAdapter = CompletionAdapter().apply {
-            onItemClick = { completion ->
+            onItemClick = { diffPatch ->
                 val editor = binding.editor
-                val cursor = editor.cursor
+                
+                try {
+                    diffPatch.apply(editor.text)
 
-                // 解析补全内容
-                val parts = completion.split("<|>")
-
-                if (parts.size >= 2) {
-                    val prefix = parts[0]
-                    val completionText = parts.subList(1, parts.size).joinToString("")
-
-                    // 获取当前行光标前的内容
-                    val currentLine = editor.text.getLine(cursor.leftLine)
-                    val currentPrefix = currentLine.substring(0, cursor.leftColumn)
-
-                    // 简化判断逻辑
-                    val shouldReplace = when {
-                        // 方法或属性访问
-                        prefix.contains(".") -> true
-                        // 前缀不匹配
-                        !currentPrefix.endsWith(prefix) -> true
-                        // 其他情况直接追加
-                        else -> false
-                    }
-
-                    if (shouldReplace) {
-                        // 计算需要替换的范围
-                        val replaceStart = cursor.leftColumn - currentPrefix.length
-                        val replaceEnd = cursor.leftColumn
-
-                        // 执行替换
-                        editor.text.replace(
-                            cursor.leftLine,
-                            replaceStart,
-                            cursor.leftLine,
-                            replaceEnd,
-                            prefix + completionText
-                        )
-
-                        // 移动光标
-                        if (parts.size > 2) {
-                            val cursorOffset = parts.take(parts.size - 1).joinToString("").length
-                            editor.setSelection(cursor.leftLine, replaceStart + cursorOffset)
-                        }
-                    } else {
-                        // 直接插入补全文本
-                        editor.text.insert(cursor.leftLine, cursor.leftColumn, completionText)
-
-                        // 移动光标到最后一个标记位置
-                        if (parts.size > 2) {
-                            val cursorOffset =
-                                parts.subList(1, parts.size - 1).joinToString("").length
-                            editor.setSelection(cursor.leftLine, cursor.leftColumn + cursorOffset)
-                        }
-                    }
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error applying diff patch", e)
+                    toast("Failed to apply completion: ${e.message}")
                 }
             }
         }
@@ -953,17 +907,11 @@ class MainActivity : AppCompatActivity() {
         completionTrigger
             .debounce(50)
             .flatMapLatest {
-                // 只在用户输入时触发补全
                 val cursor = binding.editor.cursor
-                val currentLine = binding.editor.text.getLine(cursor.leftLine)
-
-                // 检查是否需要触发补全
-
                 mockProvider.getCompletions(
                     binding.editor.text,
                     cursor.left()
                 )
-
             }
             .flowOn(Dispatchers.IO)
             .distinctUntilChanged()

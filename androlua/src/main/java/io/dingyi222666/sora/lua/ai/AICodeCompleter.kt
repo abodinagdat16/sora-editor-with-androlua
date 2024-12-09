@@ -8,5 +8,5 @@ interface AICodeCompleter {
     suspend fun singleFileCompletion(
         content: Content,
         position: CharPosition,
-    ): List<String>
+    ): List<DiffPatch>
 }

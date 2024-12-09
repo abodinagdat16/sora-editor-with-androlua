@@ -5,11 +5,12 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.dingyi222666.sora.demo.R
+import io.dingyi222666.sora.lua.ai.DiffPatch
 
 class CompletionAdapter : RecyclerView.Adapter<CompletionAdapter.ViewHolder>() {
 
-    private var completions: List<String> = emptyList()
-    var onItemClick: ((String) -> Unit)? = null
+    private var completions: List<DiffPatch> = emptyList()
+    var onItemClick: ((DiffPatch) -> Unit)? = null
 
     class ViewHolder(val textView: TextView) : RecyclerView.ViewHolder(textView)
 
@@ -20,18 +21,17 @@ class CompletionAdapter : RecyclerView.Adapter<CompletionAdapter.ViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val item = completions[position]
-        val displayText = item.replace("<|>", "")
-        holder.textView.text = displayText
+        val patch = completions[position]
+        holder.textView.text = patch.displayText
         holder.textView.setOnClickListener {
-            onItemClick?.invoke(item)
-             submitList(emptyList())
+            onItemClick?.invoke(patch)
+            submitList(emptyList())
         }
     }
 
     override fun getItemCount() = completions.size
 
-    fun submitList(newCompletions: List<String>) {
+    fun submitList(newCompletions: List<DiffPatch>) {
         completions = newCompletions
         notifyDataSetChanged()
     }
