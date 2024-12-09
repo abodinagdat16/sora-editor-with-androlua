@@ -41,10 +41,13 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts.GetContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import io.dingyi222666.sora.lua.source.PackageUtil
 import io.dingyi222666.sora.demo.databinding.ActivityMainBinding
 import io.dingyi222666.sora.demo.utils.CrashHandler
 import io.dingyi222666.sora.demo.R
+import io.dingyi222666.sora.demo.completion.CompletionAdapter
+import io.dingyi222666.sora.demo.completion.AICompletionProvider
 import io.github.rosemoe.sora.event.ContentChangeEvent
 import io.github.rosemoe.sora.event.EditorKeyEvent
 import io.github.rosemoe.sora.event.KeyBindingEvent
@@ -87,6 +90,16 @@ import io.github.rosemoe.sora.widget.style.LineInfoPanelPosition
 import io.github.rosemoe.sora.widget.style.LineInfoPanelPositionMode
 import io.github.rosemoe.sora.widget.subscribeAlways
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.tm4e.core.registry.IGrammarSource
@@ -129,6 +142,9 @@ class MainActivity : AppCompatActivity() {
     private var searchOptions = SearchOptions(false, false)
     private var undo: MenuItem? = null
     private var redo: MenuItem? = null
+    private lateinit var completionAdapter: CompletionAdapter
+    private val mockProvider = AICompletionProvider()
+    private val completionTrigger = MutableStateFlow(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -195,13 +211,19 @@ class MainActivity : AppCompatActivity() {
                 CodeEditor.FLAG_DRAW_WHITESPACE_LEADING or CodeEditor.FLAG_DRAW_LINE_SEPARATOR or CodeEditor.FLAG_DRAW_WHITESPACE_IN_SELECTION
             // Update display dynamically
             // Use CodeEditor#subscribeEvent to add listeners of different events to editor
-            subscribeAlways<SelectionChangeEvent> { updatePositionText() }
+            subscribeAlways<SelectionChangeEvent> {
+                updatePositionText()
+                completionAdapter.submitList(emptyList())
+                completionTrigger.tryEmit(completionTrigger.value + 1)
+            }
             subscribeAlways<PublishSearchResultEvent> { updatePositionText() }
             subscribeAlways<ContentChangeEvent> {
                 postDelayedInLifecycle(
                     ::updateBtnState,
                     50
                 )
+                completionAdapter.submitList(emptyList())
+                completionTrigger.tryEmit(completionTrigger.value + 1)
             }
             subscribeAlways<SideIconClickEvent> {
                 toast(R.string.tip_side_icon)
@@ -247,9 +269,9 @@ class MainActivity : AppCompatActivity() {
 
 
         androLuaLanguage.setOnDiagnosticListener {
-            diagnosticsContainer.reset()
-            diagnosticsContainer.addDiagnostics(it)
-            editor.diagnostics = diagnosticsContainer
+            /*  diagnosticsContainer.reset()
+              diagnosticsContainer.addDiagnostics(it)
+              editor.diagnostics = diagnosticsContainer*/
         }
 
         editor.setEditorLanguage(WrapperLanguage(language, androLuaLanguage))
@@ -261,6 +283,9 @@ class MainActivity : AppCompatActivity() {
         updateBtnState()
 
         switchThemeIfRequired(this, binding.editor)
+
+        setupCompletionList()
+        setupCompletionDebounce()
     }
 
     /**
@@ -851,5 +876,107 @@ class MainActivity : AppCompatActivity() {
             e.printStackTrace()
         }
     }
+
+    private fun setupCompletionList() {
+        completionAdapter = CompletionAdapter().apply {
+            onItemClick = { completion ->
+                val editor = binding.editor
+                val cursor = editor.cursor
+
+                // 解析补全内容
+                val parts = completion.split("<|>")
+
+                if (parts.size >= 2) {
+                    val prefix = parts[0]
+                    val completionText = parts.subList(1, parts.size).joinToString("")
+
+                    // 获取当前行光标前的内容
+                    val currentLine = editor.text.getLine(cursor.leftLine)
+                    val currentPrefix = currentLine.substring(0, cursor.leftColumn)
+
+                    // 简化判断逻辑
+                    val shouldReplace = when {
+                        // 方法或属性访问
+                        prefix.contains(".") -> true
+                        // 前缀不匹配
+                        !currentPrefix.endsWith(prefix) -> true
+                        // 其他情况直接追加
+                        else -> false
+                    }
+
+                    if (shouldReplace) {
+                        // 计算需要替换的范围
+                        val replaceStart = cursor.leftColumn - currentPrefix.length
+                        val replaceEnd = cursor.leftColumn
+
+                        // 执行替换
+                        editor.text.replace(
+                            cursor.leftLine,
+                            replaceStart,
+                            cursor.leftLine,
+                            replaceEnd,
+                            prefix + completionText
+                        )
+
+                        // 移动光标
+                        if (parts.size > 2) {
+                            val cursorOffset = parts.take(parts.size - 1).joinToString("").length
+                            editor.setSelection(cursor.leftLine, replaceStart + cursorOffset)
+                        }
+                    } else {
+                        // 直接插入补全文本
+                        editor.text.insert(cursor.leftLine, cursor.leftColumn, completionText)
+
+                        // 移动光标到最后一个标记位置
+                        if (parts.size > 2) {
+                            val cursorOffset =
+                                parts.subList(1, parts.size - 1).joinToString("").length
+                            editor.setSelection(cursor.leftLine, cursor.leftColumn + cursorOffset)
+                        }
+                    }
+                }
+            }
+        }
+
+        binding.completionList.apply {
+            layoutManager = LinearLayoutManager(
+                this@MainActivity,
+                LinearLayoutManager.HORIZONTAL,
+                false
+            )
+            adapter = completionAdapter
+        }
+    }
+
+    @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+    private fun setupCompletionDebounce() {
+        completionTrigger
+            .debounce(50)
+            .flatMapLatest {
+                // 只在用户输入时触发补全
+                val cursor = binding.editor.cursor
+                val currentLine = binding.editor.text.getLine(cursor.leftLine)
+
+                // 检查是否需要触发补全
+
+                mockProvider.getCompletions(
+                    binding.editor.text,
+                    cursor.left()
+                )
+
+            }
+            .flowOn(Dispatchers.IO)
+            .distinctUntilChanged()
+            .onEach { completions ->
+                withContext(Dispatchers.Main) {
+                    binding.completionList.visibility =
+                        if (completions.isEmpty()) View.GONE else View.VISIBLE
+                    completionAdapter.submitList(completions)
+                }
+            }
+            .flowOn(Dispatchers.Main)
+            .launchIn(lifecycleScope)
+    }
+
 
 }
