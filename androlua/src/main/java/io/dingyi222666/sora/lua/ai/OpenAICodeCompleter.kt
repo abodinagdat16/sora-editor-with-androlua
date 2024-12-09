@@ -69,12 +69,13 @@ class OpenAICodeCompleter(
     private val systemPrompt = """You are a code completion assistant.
 
 IMPORTANT RULES:
-1. Complete the code from current line
-2. Provide 2-3 meaningful completions
-3. Use <option> tags to separate completions
-4. Use <newline> for line breaks
-5. Keep completions within 1-5 lines
-6. Keep code concise and focused
+1.Complete the code from the current line.
+2.Provide 2-3 contextually relevant completions.
+3.Use <option> tags to separate completions.
+4.Use <newline> for line breaks.
+5.Keep completions within 1-5 lines.
+6.Keep code concise and focused.
+7.Do not add escape characters.
 
 Examples:
 # Function call
