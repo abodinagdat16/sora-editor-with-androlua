@@ -131,11 +131,11 @@ object PackageUtil {
         }
 
         val packages = currentJson?.keys()?.asSequence()?.filter { it.lowercase().startsWith(searchTerm) }
-            ?.map { CompletionName(it, CompletionItemKind.Module, " :package | :class") }?.toList()
+            ?.map { CompletionName(it, CompletionItemKind.Text, " :package | :class") }?.toList()
             ?: emptyList()
 
         val classes = classNames.filter { it.lowercase().startsWith(searchTerm) }
-            .map { CompletionName(it, CompletionItemKind.Class, " :class") }.toList()
+            .map { CompletionName(it, CompletionItemKind.Text, " :class") }.toList()
 
         return packages + classes
     }
@@ -155,20 +155,6 @@ object PackageUtil {
         }.flatMap {
             runCatching {
                 cacheClassed.getOrPut(it.name) {
-                    /* val base = (getJavaMethods(it) + getJavaFields(it)).toMutableList()
-
-                     // 添加父类方法，直到 Object
-
-                     var clazz = it
-
-                     while (clazz.name != "java.lang.Object") {
-                         clazz = clazz.superclass
-
-                         base.addAll(getJavaMethods(clazz))
-                         base.addAll(getJavaFields(clazz))
-                     }
-                     base*/
-
                     getJavaMethods(it) + getJavaFields(it)
                 }
             }.getOrElse { emptyList() }
@@ -182,6 +168,7 @@ object PackageUtil {
         val methods = clazz.methods
         val names = mutableListOf<CompletionName>()
         for (method in methods) {
+            if (method.name.contains("lambda")) continue
             names.add(CompletionName(method.name, CompletionItemKind.Method, " :method"))
 
             if (method.parameters.isEmpty() && method.name.startsWith("get")) {

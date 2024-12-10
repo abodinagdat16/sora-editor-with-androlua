@@ -156,7 +156,7 @@ class AndroLuaAutoCompleter(
 
 
     private fun isInVisibleChar(c: Char): Boolean {
-        return c == ' ' || c == '\t' || c == '\r' || c == '\n'
+        return c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '(' || c == ',' || c == ';'
     }
 
     private fun tokenize(

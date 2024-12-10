@@ -905,7 +905,7 @@ class MainActivity : AppCompatActivity() {
     @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
     private fun setupCompletionDebounce() {
         completionTrigger
-            .debounce(50)
+            .debounce(150)
             .flatMapLatest {
                 val cursor = binding.editor.cursor
                 mockProvider.getCompletions(
