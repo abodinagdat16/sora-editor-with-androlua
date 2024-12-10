@@ -8,13 +8,13 @@ data class AutocompleteTemplate(
         fun getTemplateForModel(): AutocompleteTemplate {
             return AutocompleteTemplate(
                 template = buildString {
-                    appendLine("Given the current code context, fill the code at {FILL_CODE_HERE}. Return only the code without explanation. Use <newline> to indicate a new line.")
-                    appendLine("<code>")
+                    appendLine("Given the current code context, complete the code at {FILL_CODE_HERE}. The first line MUST be the direct completion of the current line. You may optionally add up to 2 additional related lines after it. Return only the code without explanation.")
+                    appendLine("<context>")
                     appendLine("{prefix} {FILL_CODE_HERE} {suffix}")
-                    appendLine("</code>")
-                    appendLine("fill the code. Don't add any existing code. Your response should only include the code.")
+                    appendLine("</context>")
+                    appendLine("Your response should only include 1-3 lines of code. The first line MUST complete the current line of code. Do not repeat any existing code.")
                 },
-                stopSequences = listOf("```", "\n\n")
+                stopSequences = listOf("```", "\n\n\n\n")  // Prevent more than 3 lines
             )
         }
     }

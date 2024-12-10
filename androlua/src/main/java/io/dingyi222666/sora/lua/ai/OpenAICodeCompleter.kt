@@ -207,7 +207,7 @@ class OpenAICodeCompleter(
                 }
             })
             put("temperature", 0)
-            put("max_tokens", 300)
+            put("max_tokens", 150)
             put("n", 1)
             put("stream", true) // 启用 SSE
         }
